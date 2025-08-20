@@ -63,6 +63,19 @@ export const authorize = (...roles) => {
   };
 };
 
+// Admin only access
+export const admin = (req, res, next) => {
+  if (!req.user) {
+    throw new ApiError(401, 'Not authorized to access this route');
+  }
+
+  if (req.user.role !== 'admin') {
+    throw new ApiError(403, 'Admin access required');
+  }
+
+  next();
+};
+
 // Optional authentication - doesn't throw error if no token
 export const optionalAuth = asyncHandler(async (req, res, next) => {
   let token;

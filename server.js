@@ -21,6 +21,7 @@ import reviewRoutes from './routes/review.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import cartRoutes from './routes/cart.routes.js';
+import leadRoutes from './routes/lead.routes.js';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware.js';
@@ -83,9 +84,19 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    // Update these URLs to your actual deployed frontend and backend URLs
     const allowedOrigins = process.env.NODE_ENV === 'production' 
-      ? ['https://yourdomain.com'] 
-      : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001', 'http://localhost:3002'];
+      ? [
+          'https://your-frontend.vercel.app', // Vercel frontend
+          'https://your-backend.onrender.com' // Render backend (if needed)
+        ] 
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://127.0.0.1:3000',
+          'http://127.0.0.1:3001',
+          'http://localhost:3002'
+        ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -131,6 +142,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/leads', leadRoutes);
 
 // Error handling middleware
 app.use(notFound);

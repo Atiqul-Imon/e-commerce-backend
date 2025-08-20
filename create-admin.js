@@ -10,19 +10,15 @@ const createAdminUser = async () => {
     // Connect to database
     await connectDB();
     
-    // Check if admin already exists
-    const existingAdmin = await User.findOne({ email: 'admin@example.com' });
+    // Delete existing admin@arizaan.com user
+    await User.deleteOne({ email: 'admin@arizaan.com' });
+    console.log('🗑️ Deleted existing admin@arizaan.com user');
     
-    if (existingAdmin) {
-      console.log('Admin user already exists');
-      process.exit(0);
-    }
-
-    // Create admin user
+    // Create new admin user
     const adminUser = await User.create({
-      name: 'Admin User',
-      email: 'admin@example.com',
-      password: 'admin123',
+      name: 'Arizaan Admin',
+      email: 'admin@arizaan.com',
+      password: 'arizaan123',
       role: 'admin',
       permissions: [
         'manage_users',
@@ -34,8 +30,8 @@ const createAdminUser = async () => {
     });
 
     console.log('✅ Admin user created successfully!');
-    console.log('Email: admin@example.com');
-    console.log('Password: admin123');
+    console.log('Email: admin@arizaan.com');
+    console.log('Password: arizaan123');
     console.log('Role: admin');
     
     process.exit(0);
