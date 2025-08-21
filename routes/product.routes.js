@@ -12,7 +12,11 @@ import {
   getCategories,
   getBrands,
   getRelatedProducts,
-  createFashionProducts
+  createFashionProducts,
+  generateProductSKU,
+  batchGenerateSKUs,
+  validateProductSKU,
+  getProductsWithoutSKU
 } from '../controllers/product.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
@@ -35,6 +39,12 @@ router.post('/:id/reviews', protect, addProductReview);
 router.post('/', protect, authorize('admin'), createProduct);
 router.put('/:id', protect, authorize('admin'), updateProduct);
 router.delete('/:id', protect, authorize('admin'), deleteProduct);
+
+// SKU Management routes (admin only)
+router.post('/:id/generate-sku', protect, authorize('admin'), generateProductSKU);
+router.post('/batch-generate-skus', protect, authorize('admin'), batchGenerateSKUs);
+router.post('/validate-sku', protect, authorize('admin'), validateProductSKU);
+router.get('/admin/without-sku', protect, authorize('admin'), getProductsWithoutSKU);
 
 // Development route for creating fashion products
 router.post('/fashion/create', createFashionProducts);

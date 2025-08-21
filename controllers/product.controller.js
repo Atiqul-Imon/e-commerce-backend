@@ -2,6 +2,7 @@ import Product from '../models/product.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { generateSKU, validateSKU, parseSKU } from '../utils/skuGenerator.js';
 
 // Create new product
 const createProduct = asyncHandler(async (req, res) => {
@@ -27,20 +28,53 @@ const createProduct = asyncHandler(async (req, res) => {
     returnPolicy
   } = req.body;
 
-  // Check if product with same SKU already exists
+  let finalSku = sku;
+
+  // Handle SKU generation
   if (sku) {
+    // If SKU is provided, validate it
+    const validation = validateSKU(sku);
+    if (!validation.valid) {
+      throw new ApiError(400, `Invalid SKU format: ${validation.error}`);
+    }
+
+    // Check if product with same SKU already exists
     const existingProduct = await Product.findOne({ sku });
     if (existingProduct) {
       throw new ApiError(400, 'Product with this SKU already exists');
     }
+  } else {
+    // Generate SKU automatically
+    try {
+      finalSku = await generateSKU({
+        name,
+        category,
+        subcategory,
+        brand,
+        tags,
+        price: price || originalPrice
+      });
+      
+      console.log(`Auto-generated SKU for product "${name}": ${finalSku}`);
+    } catch (error) {
+      console.error('Error generating SKU:', error);
+      throw new ApiError(500, 'Failed to generate SKU for product');
+    }
   }
+
+  // Calculate derived pricing fields
+  const finalPrice = price || originalPrice;
+  const finalOriginalPrice = originalPrice || price;
+  const finalDiscountPercentage = discountPercentage || 
+    (finalOriginalPrice && finalPrice && finalOriginalPrice > finalPrice ? 
+      Math.round(((finalOriginalPrice - finalPrice) / finalOriginalPrice) * 100) : 0);
 
   const product = await Product.create({
     name,
     description,
-    price,
-    originalPrice,
-    discountPercentage,
+    price: finalPrice,
+    originalPrice: finalOriginalPrice,
+    discountPercentage: finalDiscountPercentage,
     category,
     subcategory,
     brand,
@@ -48,7 +82,7 @@ const createProduct = asyncHandler(async (req, res) => {
     colors,
     sizes,
     stock,
-    sku,
+    sku: finalSku,
     tags,
     weight,
     dimensions,
@@ -57,8 +91,14 @@ const createProduct = asyncHandler(async (req, res) => {
     returnPolicy
   });
 
+  // Parse SKU for additional information
+  const skuInfo = parseSKU(finalSku);
+
   return res.status(201).json(
-    new ApiResponse(201, product, 'Product created successfully')
+    new ApiResponse(201, {
+      ...product.toObject(),
+      skuInfo
+    }, 'Product created successfully with auto-generated SKU')
   );
 });
 
@@ -857,10 +897,40 @@ const createFashionProducts = asyncHandler(async (req, res) => {
   // Clear existing products
   await Product.deleteMany({});
 
-  const createdProducts = await Product.insertMany(fashionProducts);
+  const createdProducts = [];
+  
+  // Generate SKUs and create products one by one
+  for (const productData of fashionProducts) {
+    const { sku, ...productWithoutSku } = productData; // Remove hardcoded SKU
+    
+    // Generate automatic SKU
+    const autoSku = await generateSKU({
+      name: productData.name,
+      category: productData.category,
+      subcategory: productData.subcategory,
+      brand: productData.brand,
+      tags: productData.tags,
+      price: productData.price || productData.originalPrice
+    });
+    
+    // Create product with auto-generated SKU
+    const product = await Product.create({
+      ...productWithoutSku,
+      sku: autoSku
+    });
+    
+    // Add SKU info to response
+    const skuInfo = parseSKU(autoSku);
+    createdProducts.push({
+      ...product.toObject(),
+      skuInfo
+    });
+    
+    console.log(`Created product "${productData.name}" with SKU: ${autoSku}`);
+  }
 
   return res.status(201).json(
-    new ApiResponse(201, createdProducts, 'Fashion products created successfully')
+    new ApiResponse(201, createdProducts, 'Fashion products created successfully with auto-generated SKUs')
   );
 });
 
@@ -888,6 +958,196 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
   );
 });
 
+// Generate SKU for existing product
+const generateProductSKU = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { force = false } = req.body;
+
+  const product = await Product.findById(id);
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+
+  // Check if product already has a SKU and force is not true
+  if (product.sku && !force) {
+    return res.status(200).json(
+      new ApiResponse(200, {
+        product,
+        skuInfo: parseSKU(product.sku)
+      }, 'Product already has a SKU. Use force=true to regenerate.')
+    );
+  }
+
+  try {
+    const newSku = await generateSKU({
+      name: product.name,
+      category: product.category,
+      subcategory: product.subcategory,
+      brand: product.brand,
+      tags: product.tags,
+      price: product.price || product.originalPrice
+    });
+
+    product.sku = newSku;
+    await product.save();
+
+    const skuInfo = parseSKU(newSku);
+
+    return res.status(200).json(
+      new ApiResponse(200, {
+        product,
+        skuInfo
+      }, 'SKU generated successfully for existing product')
+    );
+  } catch (error) {
+    console.error('Error generating SKU for existing product:', error);
+    throw new ApiError(500, 'Failed to generate SKU for product');
+  }
+});
+
+// Batch generate SKUs for multiple products
+const batchGenerateSKUs = asyncHandler(async (req, res) => {
+  const { productIds, force = false } = req.body;
+
+  if (!productIds || !Array.isArray(productIds)) {
+    throw new ApiError(400, 'Product IDs array is required');
+  }
+
+  const results = [];
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const productId of productIds) {
+    try {
+      const product = await Product.findById(productId);
+      if (!product) {
+        results.push({
+          productId,
+          success: false,
+          error: 'Product not found'
+        });
+        errorCount++;
+        continue;
+      }
+
+      // Skip if product already has SKU and force is false
+      if (product.sku && !force) {
+        results.push({
+          productId,
+          success: false,
+          error: 'Product already has SKU. Use force=true to regenerate.',
+          existingSku: product.sku
+        });
+        errorCount++;
+        continue;
+      }
+
+      const newSku = await generateSKU({
+        name: product.name,
+        category: product.category,
+        subcategory: product.subcategory,
+        brand: product.brand,
+        tags: product.tags,
+        price: product.price || product.originalPrice
+      });
+
+      product.sku = newSku;
+      await product.save();
+
+      results.push({
+        productId,
+        success: true,
+        sku: newSku,
+        skuInfo: parseSKU(newSku)
+      });
+      successCount++;
+
+    } catch (error) {
+      results.push({
+        productId,
+        success: false,
+        error: error.message
+      });
+      errorCount++;
+    }
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      results,
+      summary: {
+        total: productIds.length,
+        success: successCount,
+        errors: errorCount
+      }
+    }, `Batch SKU generation completed. ${successCount} successful, ${errorCount} failed.`)
+  );
+});
+
+// Validate SKU
+const validateProductSKU = asyncHandler(async (req, res) => {
+  const { sku } = req.body;
+
+  if (!sku) {
+    throw new ApiError(400, 'SKU is required');
+  }
+
+  const validation = validateSKU(sku);
+  const skuInfo = validation.valid ? parseSKU(sku) : null;
+
+  // Check if SKU exists in database
+  const existingProduct = await Product.findOne({ sku });
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      validation,
+      skuInfo,
+      exists: !!existingProduct,
+      product: existingProduct ? {
+        id: existingProduct._id,
+        name: existingProduct.name,
+        category: existingProduct.category
+      } : null
+    }, validation.valid ? 'SKU is valid' : 'SKU is invalid')
+  );
+});
+
+// Get products without SKU
+const getProductsWithoutSKU = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 50 } = req.query;
+
+  const products = await Product.find({
+    $or: [
+      { sku: { $exists: false } },
+      { sku: null },
+      { sku: '' }
+    ]
+  })
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .select('_id name category subcategory brand price originalPrice createdAt');
+
+  const total = await Product.countDocuments({
+    $or: [
+      { sku: { $exists: false } },
+      { sku: null },
+      { sku: '' }
+    ]
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      products,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    }, `Found ${total} products without SKU`)
+  );
+});
+
 export {
   createProduct,
   getAllProducts,
@@ -901,5 +1161,9 @@ export {
   getCategories,
   getBrands,
   getRelatedProducts,
-  createFashionProducts
+  createFashionProducts,
+  generateProductSKU,
+  batchGenerateSKUs,
+  validateProductSKU,
+  getProductsWithoutSKU
 }; 
