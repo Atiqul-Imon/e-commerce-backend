@@ -105,6 +105,7 @@ export const addToCart = asyncHandler(async (req, res) => {
     }
 
     cart.items[existingItemIndex].quantity = newQuantity
+    cart.items[existingItemIndex].price = product.price // Update price in case it changed
     cart.items[existingItemIndex].selectedColor = selectedColor || cart.items[existingItemIndex].selectedColor
     cart.items[existingItemIndex].selectedSize = selectedSize || cart.items[existingItemIndex].selectedSize
   } else {
@@ -114,7 +115,7 @@ export const addToCart = asyncHandler(async (req, res) => {
       quantity,
       selectedColor,
       selectedSize,
-      priceAtTime: product.price // Store price at time of adding
+      price: product.price // Store price at time of adding
     })
   }
 
