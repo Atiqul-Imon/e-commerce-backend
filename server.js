@@ -88,10 +88,10 @@ app.use(cors({
     // Production and development origins
     const allowedOrigins = process.env.NODE_ENV === 'production' 
       ? [
-          process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app',
-          process.env.BACKEND_URL || 'https://your-backend-domain.onrender.com',
-          'https://ecommerce-frontend.vercel.app', // Fallback
-          'https://ecommerce-backend.onrender.com' // Fallback
+          process.env.FRONTEND_URL || 'https://e-commerce-frontend-pink-xi.vercel.app',
+          process.env.BACKEND_URL || 'https://e-commerce-backend-e8a0.onrender.com',
+          'https://e-commerce-frontend-pink-xi.vercel.app', // Vercel frontend URL
+          'https://e-commerce-backend-e8a0.onrender.com' // Render backend URL
         ] 
       : [
           'http://localhost:3000',
