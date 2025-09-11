@@ -29,6 +29,7 @@ import { notFound } from './middleware/notFound.middleware.js';
 
 // Import database connection
 import connectDB from './config/database.js';
+import mongoose from 'mongoose';
 
 // Load environment variables
 dotenv.config();
@@ -84,11 +85,13 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Update these URLs to your actual deployed frontend and backend URLs
+    // Production and development origins
     const allowedOrigins = process.env.NODE_ENV === 'production' 
       ? [
-          'https://your-frontend.vercel.app', // Vercel frontend
-          'https://your-backend.onrender.com' // Render backend (if needed)
+          process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app',
+          process.env.BACKEND_URL || 'https://your-backend-domain.onrender.com',
+          'https://ecommerce-frontend.vercel.app', // Fallback
+          'https://ecommerce-backend.onrender.com' // Fallback
         ] 
       : [
           'http://localhost:3000',
@@ -101,6 +104,7 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.warn(`CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -128,7 +132,29 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: 'Server is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    version: '1.0.0',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Root endpoint for basic server info
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'E-Commerce API Server',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      products: '/api/products',
+      auth: '/api/auth',
+      orders: '/api/orders',
+      cart: '/api/cart'
+    }
   });
 });
 
