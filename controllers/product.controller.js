@@ -147,11 +147,21 @@ const getAllProducts = asyncHandler(async (req, res) => {
     inStock || ''
   );
 
-  // Try to get from cache first
-  const cachedData = await cache.get(cacheKey);
-  if (cachedData) {
-    console.log(`Cache hit for products: ${cacheKey}`);
-    return res.status(200).json(cachedData);
+  // Try to get from cache first (with timeout)
+  try {
+    const cachedData = await Promise.race([
+      cache.get(cacheKey),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Cache timeout')), 2000)
+      )
+    ]);
+    
+    if (cachedData) {
+      console.log(`Cache hit for products: ${cacheKey}`);
+      return res.status(200).json(cachedData);
+    }
+  } catch (error) {
+    console.warn('Cache get timeout or error, proceeding with database query:', error.message);
   }
 
   // Build filter object
@@ -204,9 +214,18 @@ const getAllProducts = asyncHandler(async (req, res) => {
     }
   }, 'Products retrieved successfully');
 
-  // Cache the response for 5 minutes
-  await cache.set(cacheKey, response, 300);
-  console.log(`Cached products: ${cacheKey}`);
+  // Cache the response for 5 minutes (with timeout)
+  try {
+    await Promise.race([
+      cache.set(cacheKey, response, 300),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Cache set timeout')), 2000)
+      )
+    ]);
+    console.log(`Cached products: ${cacheKey}`);
+  } catch (error) {
+    console.warn('Cache set timeout or error:', error.message);
+  }
 
   return res.status(200).json(response);
 });
@@ -337,11 +356,21 @@ const addProductReview = asyncHandler(async (req, res) => {
 const getFeaturedProducts = asyncHandler(async (req, res) => {
   const cacheKey = cache.generateKey('featured-products');
   
-  // Try to get from cache first
-  const cachedData = await cache.get(cacheKey);
-  if (cachedData) {
-    console.log(`Cache hit for featured products: ${cacheKey}`);
-    return res.status(200).json(cachedData);
+  // Try to get from cache first (with timeout)
+  try {
+    const cachedData = await Promise.race([
+      cache.get(cacheKey),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Cache timeout')), 2000)
+      )
+    ]);
+    
+    if (cachedData) {
+      console.log(`Cache hit for featured products: ${cacheKey}`);
+      return res.status(200).json(cachedData);
+    }
+  } catch (error) {
+    console.warn('Cache get timeout or error, proceeding with database query:', error.message);
   }
 
   const products = await Product.find({
@@ -353,9 +382,18 @@ const getFeaturedProducts = asyncHandler(async (req, res) => {
 
   const response = new ApiResponse(200, products, 'Featured products retrieved successfully');
   
-  // Cache for 10 minutes
-  await cache.set(cacheKey, response, 600);
-  console.log(`Cached featured products: ${cacheKey}`);
+  // Cache for 10 minutes (with timeout)
+  try {
+    await Promise.race([
+      cache.set(cacheKey, response, 600),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Cache set timeout')), 2000)
+      )
+    ]);
+    console.log(`Cached featured products: ${cacheKey}`);
+  } catch (error) {
+    console.warn('Cache set timeout or error:', error.message);
+  }
 
   return res.status(200).json(response);
 });
@@ -364,11 +402,21 @@ const getFeaturedProducts = asyncHandler(async (req, res) => {
 const getTrendingProducts = asyncHandler(async (req, res) => {
   const cacheKey = cache.generateKey('trending-products');
   
-  // Try to get from cache first
-  const cachedData = await cache.get(cacheKey);
-  if (cachedData) {
-    console.log(`Cache hit for trending products: ${cacheKey}`);
-    return res.status(200).json(cachedData);
+  // Try to get from cache first (with timeout)
+  try {
+    const cachedData = await Promise.race([
+      cache.get(cacheKey),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Cache timeout')), 2000)
+      )
+    ]);
+    
+    if (cachedData) {
+      console.log(`Cache hit for trending products: ${cacheKey}`);
+      return res.status(200).json(cachedData);
+    }
+  } catch (error) {
+    console.warn('Cache get timeout or error, proceeding with database query:', error.message);
   }
 
   const products = await Product.find({
@@ -380,9 +428,18 @@ const getTrendingProducts = asyncHandler(async (req, res) => {
 
   const response = new ApiResponse(200, products, 'Trending products retrieved successfully');
   
-  // Cache for 15 minutes
-  await cache.set(cacheKey, response, 900);
-  console.log(`Cached trending products: ${cacheKey}`);
+  // Cache for 15 minutes (with timeout)
+  try {
+    await Promise.race([
+      cache.set(cacheKey, response, 900),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Cache set timeout')), 2000)
+      )
+    ]);
+    console.log(`Cached trending products: ${cacheKey}`);
+  } catch (error) {
+    console.warn('Cache set timeout or error:', error.message);
+  }
 
   return res.status(200).json(response);
 });
