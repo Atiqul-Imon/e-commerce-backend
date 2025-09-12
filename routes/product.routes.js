@@ -19,26 +19,32 @@ import {
   getProductsWithoutSKU
 } from '../controllers/product.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
+import {
+  validateCreateProduct,
+  validateUpdateProduct,
+  validateMongoId,
+  validatePagination
+} from '../middleware/validation.middleware.js';
 
 const router = express.Router();
 
 // Public routes
-router.get('/', getAllProducts);
+router.get('/', validatePagination, getAllProducts);
 router.get('/featured', getFeaturedProducts);
 router.get('/trending', getTrendingProducts);
 router.get('/best-sellers', getBestSellers);
 router.get('/categories', getCategories);
 router.get('/brands', getBrands);
-router.get('/:id', getProductById);
-router.get('/:id/related', getRelatedProducts);
+router.get('/:id', validateMongoId, getProductById);
+router.get('/:id/related', validateMongoId, getRelatedProducts);
 
 // Protected routes (require authentication)
-router.post('/:id/reviews', protect, addProductReview);
+router.post('/:id/reviews', protect, validateMongoId, addProductReview);
 
 // Admin routes (require authentication and admin role)
-router.post('/', protect, authorize('admin'), createProduct);
-router.put('/:id', protect, authorize('admin'), updateProduct);
-router.delete('/:id', protect, authorize('admin'), deleteProduct);
+router.post('/', protect, authorize('admin'), validateCreateProduct, createProduct);
+router.put('/:id', protect, authorize('admin'), validateUpdateProduct, updateProduct);
+router.delete('/:id', protect, authorize('admin'), validateMongoId, deleteProduct);
 
 // SKU Management routes (admin only)
 router.post('/:id/generate-sku', protect, authorize('admin'), generateProductSKU);

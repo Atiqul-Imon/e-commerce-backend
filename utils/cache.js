@@ -55,6 +55,14 @@ if (process.env.REDIS_URL) {
   console.warn('No REDIS_URL provided. Caching will be disabled.');
 }
 
+// Cache statistics
+let cacheStats = {
+  hits: 0,
+  misses: 0,
+  sets: 0,
+  deletes: 0
+};
+
 // Cache utility functions
 export const cache = {
   // Get data from cache
@@ -62,9 +70,16 @@ export const cache = {
     try {
       if (!isRedisConnected || !redisClient) return null;
       const data = await redisClient.get(key);
-      return data ? JSON.parse(data) : null;
+      if (data) {
+        cacheStats.hits++;
+        return JSON.parse(data);
+      } else {
+        cacheStats.misses++;
+        return null;
+      }
     } catch (error) {
       console.warn('Cache get error:', error.message);
+      cacheStats.misses++;
       return null;
     }
   },
@@ -74,6 +89,7 @@ export const cache = {
     try {
       if (!isRedisConnected || !redisClient) return false;
       await redisClient.setEx(key, ttl, JSON.stringify(data));
+      cacheStats.sets++;
       return true;
     } catch (error) {
       console.warn('Cache set error:', error.message);
@@ -85,8 +101,9 @@ export const cache = {
   del: async (key) => {
     try {
       if (!isRedisConnected || !redisClient) return false;
-      await redisClient.del(key);
-      return true;
+      const result = await redisClient.del(key);
+      cacheStats.deletes++;
+      return result > 0;
     } catch (error) {
       console.warn('Cache delete error:', error.message);
       return false;
@@ -100,6 +117,7 @@ export const cache = {
       const keys = await redisClient.keys(pattern);
       if (keys.length > 0) {
         await redisClient.del(keys);
+        cacheStats.deletes += keys.length;
       }
       return true;
     } catch (error) {
@@ -108,6 +126,79 @@ export const cache = {
     }
   },
 
+  // Get multiple keys at once
+  mget: async (keys) => {
+    try {
+      if (!isRedisConnected || !redisClient) return keys.map(() => null);
+      const values = await redisClient.mGet(keys);
+      return values.map(value => value ? JSON.parse(value) : null);
+    } catch (error) {
+      console.warn('Cache mget error:', error.message);
+      return keys.map(() => null);
+    }
+  },
+
+  // Set multiple key-value pairs
+  mset: async (keyValuePairs, ttl = 300) => {
+    try {
+      if (!isRedisConnected || !redisClient) return false;
+      const pipeline = redisClient.multi();
+      keyValuePairs.forEach(([key, value]) => {
+        pipeline.setEx(key, ttl, JSON.stringify(value));
+      });
+      await pipeline.exec();
+      cacheStats.sets += keyValuePairs.length;
+      return true;
+    } catch (error) {
+      console.warn('Cache mset error:', error.message);
+      return false;
+    }
+  },
+
+  // Check if key exists
+  exists: async (key) => {
+    try {
+      if (!isRedisConnected || !redisClient) return false;
+      const result = await redisClient.exists(key);
+      return result === 1;
+    } catch (error) {
+      console.warn('Cache exists error:', error.message);
+      return false;
+    }
+  },
+
+  // Set expiration for key
+  expire: async (key, ttl) => {
+    try {
+      if (!isRedisConnected || !redisClient) return false;
+      const result = await redisClient.expire(key, ttl);
+      return result === 1;
+    } catch (error) {
+      console.warn('Cache expire error:', error.message);
+      return false;
+    }
+  },
+
+  // Flush all cache
+  flush: async () => {
+    try {
+      if (!isRedisConnected || !redisClient) return false;
+      await redisClient.flushAll();
+      cacheStats = { hits: 0, misses: 0, sets: 0, deletes: 0 };
+      return true;
+    } catch (error) {
+      console.warn('Cache flush error:', error.message);
+      return false;
+    }
+  },
+
+  // Get cache statistics
+  getStats: () => ({
+    ...cacheStats,
+    hitRate: cacheStats.hits / (cacheStats.hits + cacheStats.misses) || 0,
+    isConnected: isRedisConnected
+  }),
+
   // Check if cache is available
   isAvailable: () => isRedisConnected && redisClient,
 
@@ -115,6 +206,21 @@ export const cache = {
   generateKey: (prefix, ...params) => {
     const keyParts = [prefix, ...params.filter(p => p !== undefined && p !== null)];
     return keyParts.join(':');
+  },
+
+  // Cache key generators for common patterns
+  keys: {
+    product: (id) => `product:${id}`,
+    products: (filters) => `products:${JSON.stringify(filters)}`,
+    featuredProducts: () => 'products:featured',
+    trendingProducts: () => 'products:trending',
+    bestSellers: () => 'products:best-sellers',
+    categories: () => 'categories:all',
+    brands: () => 'brands:all',
+    user: (id) => `user:${id}`,
+    cart: (userId) => `cart:${userId}`,
+    order: (id) => `order:${id}`,
+    orders: (userId, filters) => `orders:${userId}:${JSON.stringify(filters)}`
   }
 };
 

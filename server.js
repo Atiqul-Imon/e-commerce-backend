@@ -22,10 +22,29 @@ import paymentRoutes from './routes/payment.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import cartRoutes from './routes/cart.routes.js';
 import leadRoutes from './routes/lead.routes.js';
+import searchRoutes from './routes/search.routes.js';
+import recommendationRoutes from './routes/recommendation.routes.js';
+import healthRoutes from './routes/health.routes.js';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware.js';
 import { notFound } from './middleware/notFound.middleware.js';
+import { 
+  generalLimiter, 
+  authLimiter, 
+  passwordResetLimiter, 
+  orderLimiter, 
+  searchLimiter, 
+  cartLimiter,
+  roleBasedLimiter 
+} from './middleware/rateLimiter.middleware.js';
+import { 
+  securityHeaders, 
+  additionalSecurity, 
+  requestSizeLimiter, 
+  securityLogger 
+} from './middleware/security.middleware.js';
+import logger from './utils/logger.js';
 
 // Import database connection
 import connectDB from './config/database.js';
@@ -201,6 +220,9 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/health', healthRoutes);
 
 // Error handling middleware
 app.use(notFound);

@@ -4,16 +4,29 @@ export const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
-  // Log error for debugging
-  console.error('Error:', {
+  // Enhanced error logging
+  const errorLog = {
     message: err.message,
     stack: err.stack,
     url: req.url,
     method: req.method,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
-  });
+    timestamp: new Date().toISOString(),
+    userId: req.user?.id || 'anonymous',
+    body: req.method !== 'GET' ? req.body : undefined,
+    query: req.query,
+    params: req.params
+  };
+
+  // Log error with appropriate level
+  if (err.statusCode >= 500) {
+    console.error('Server Error:', errorLog);
+  } else if (err.statusCode >= 400) {
+    console.warn('Client Error:', errorLog);
+  } else {
+    console.log('Error:', errorLog);
+  }
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
@@ -69,11 +82,27 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // Send error response
-  res.status(error.statusCode).json({
+  const response = {
     success: false,
     error: error.message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+    statusCode: error.statusCode,
+    timestamp: new Date().toISOString(),
+    path: req.url,
+    method: req.method
+  };
+
+  // Add additional details in development
+  if (process.env.NODE_ENV === 'development') {
+    response.stack = err.stack;
+    response.details = error.details || null;
+  }
+
+  // Add validation errors if present
+  if (error.details && Array.isArray(error.details)) {
+    response.validationErrors = error.details;
+  }
+
+  res.status(error.statusCode).json(response);
 };
 
 // Handle uncaught exceptions
