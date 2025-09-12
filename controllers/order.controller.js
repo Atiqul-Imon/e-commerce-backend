@@ -64,9 +64,22 @@ export const createOrder = asyncHandler(async (req, res) => {
     
     // Validate each item
     for (const item of items) {
-      const product = await Product.findById(item.productId || item._id)
+      // For guest cart, we need to use the actual product ID, not the temporary guest ID
+      let productId = item.productId || item._id
+      
+      // If it's a guest cart item with a temporary ID, use the product._id instead
+      if (item.product && item.product._id) {
+        productId = item.product._id
+      }
+      
+      // Validate that we have a proper MongoDB ObjectId
+      if (!productId || typeof productId !== 'string' || productId.length !== 24) {
+        throw new ApiError(400, `Invalid product ID: ${productId}`)
+      }
+      
+      const product = await Product.findById(productId)
       if (!product || !product.isActive) {
-        throw new ApiError(404, `Product ${item.name || item.productId} not found or inactive`)
+        throw new ApiError(404, `Product ${item.name || productId} not found or inactive`)
       }
       
       if (product.stock < item.quantity) {
