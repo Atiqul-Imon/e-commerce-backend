@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { generateSKU, validateSKU, parseSKU } from '../utils/skuGenerator.js';
+import { cache, cacheMiddleware } from '../utils/cache.js';
 
 // Create new product
 const createProduct = asyncHandler(async (req, res) => {
@@ -94,6 +95,12 @@ const createProduct = asyncHandler(async (req, res) => {
   // Parse SKU for additional information
   const skuInfo = parseSKU(finalSku);
 
+  // Invalidate product caches when new product is created
+  await cache.delPattern('products:*');
+  await cache.delPattern('featured-products');
+  await cache.delPattern('trending-products');
+  await cache.delPattern('best-sellers');
+
   return res.status(201).json(
     new ApiResponse(201, {
       ...product.toObject(),
@@ -120,6 +127,32 @@ const getAllProducts = asyncHandler(async (req, res) => {
     bestSeller,
     inStock
   } = req.query;
+
+  // Generate cache key based on query parameters
+  const cacheKey = cache.generateKey(
+    'products',
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    category || '',
+    subcategory || '',
+    brand || '',
+    minPrice || '',
+    maxPrice || '',
+    search || '',
+    featured || '',
+    trending || '',
+    bestSeller || '',
+    inStock || ''
+  );
+
+  // Try to get from cache first
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) {
+    console.log(`Cache hit for products: ${cacheKey}`);
+    return res.status(200).json(cachedData);
+  }
 
   // Build filter object
   const filter = { isActive: true };
@@ -160,18 +193,22 @@ const getAllProducts = asyncHandler(async (req, res) => {
   const totalProducts = await Product.countDocuments(filter);
   const totalPages = Math.ceil(totalProducts / parseInt(limit));
 
-  return res.status(200).json(
-    new ApiResponse(200, {
-      products,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages,
-        totalProducts,
-        hasNextPage: parseInt(page) < totalPages,
-        hasPrevPage: parseInt(page) > 1
-      }
-    }, 'Products retrieved successfully')
-  );
+  const response = new ApiResponse(200, {
+    products,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages,
+      totalProducts,
+      hasNextPage: parseInt(page) < totalPages,
+      hasPrevPage: parseInt(page) > 1
+    }
+  }, 'Products retrieved successfully');
+
+  // Cache the response for 5 minutes
+  await cache.set(cacheKey, response, 300);
+  console.log(`Cached products: ${cacheKey}`);
+
+  return res.status(200).json(response);
 });
 
 // Get single product by ID
@@ -298,6 +335,15 @@ const addProductReview = asyncHandler(async (req, res) => {
 
 // Get featured products
 const getFeaturedProducts = asyncHandler(async (req, res) => {
+  const cacheKey = cache.generateKey('featured-products');
+  
+  // Try to get from cache first
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) {
+    console.log(`Cache hit for featured products: ${cacheKey}`);
+    return res.status(200).json(cachedData);
+  }
+
   const products = await Product.find({
     featured: true,
     isActive: true
@@ -305,13 +351,26 @@ const getFeaturedProducts = asyncHandler(async (req, res) => {
     .limit(8)
     .select('name price images ratings discountPercentage category');
 
-  return res.status(200).json(
-    new ApiResponse(200, products, 'Featured products retrieved successfully')
-  );
+  const response = new ApiResponse(200, products, 'Featured products retrieved successfully');
+  
+  // Cache for 10 minutes
+  await cache.set(cacheKey, response, 600);
+  console.log(`Cached featured products: ${cacheKey}`);
+
+  return res.status(200).json(response);
 });
 
 // Get trending products
 const getTrendingProducts = asyncHandler(async (req, res) => {
+  const cacheKey = cache.generateKey('trending-products');
+  
+  // Try to get from cache first
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) {
+    console.log(`Cache hit for trending products: ${cacheKey}`);
+    return res.status(200).json(cachedData);
+  }
+
   const products = await Product.find({
     trending: true,
     isActive: true
@@ -319,9 +378,13 @@ const getTrendingProducts = asyncHandler(async (req, res) => {
     .limit(8)
     .select('name price images ratings discountPercentage category');
 
-  return res.status(200).json(
-    new ApiResponse(200, products, 'Trending products retrieved successfully')
-  );
+  const response = new ApiResponse(200, products, 'Trending products retrieved successfully');
+  
+  // Cache for 15 minutes
+  await cache.set(cacheKey, response, 900);
+  console.log(`Cached trending products: ${cacheKey}`);
+
+  return res.status(200).json(response);
 });
 
 // Get best sellers

@@ -120,6 +120,36 @@ app.use(cors({
 // Compression middleware
 app.use(compression());
 
+// Cache middleware for static responses
+app.use((req, res, next) => {
+  // Set cache headers for different types of responses
+  if (req.path.startsWith('/api/products') && req.method === 'GET') {
+    // Cache product data for 5 minutes
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+    res.set('ETag', 'W/"products"');
+  } else if (req.path.startsWith('/api/categories') && req.method === 'GET') {
+    // Cache categories for 1 hour
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    res.set('ETag', 'W/"categories"');
+  } else if (req.path.startsWith('/api/products/featured') && req.method === 'GET') {
+    // Cache featured products for 10 minutes
+    res.set('Cache-Control', 'public, max-age=600, s-maxage=600');
+    res.set('ETag', 'W/"featured"');
+  } else if (req.path.startsWith('/api/products/trending') && req.method === 'GET') {
+    // Cache trending products for 15 minutes
+    res.set('Cache-Control', 'public, max-age=900, s-maxage=900');
+    res.set('ETag', 'W/"trending"');
+  } else if (req.path.startsWith('/api/health') && req.method === 'GET') {
+    // Cache health check for 30 seconds
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=30');
+  } else if (req.method === 'GET') {
+    // Default cache for other GET requests
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=60');
+  }
+  
+  next();
+});
+
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
