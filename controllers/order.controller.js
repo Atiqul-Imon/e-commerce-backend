@@ -19,6 +19,10 @@ const generateOrderNumber = () => {
 // @route   POST /api/orders
 // @access  Private/Public (for guest checkout)
 export const createOrder = asyncHandler(async (req, res) => {
+  console.log('=== ORDER CREATION REQUEST ===')
+  console.log('Request body:', JSON.stringify(req.body, null, 2))
+  console.log('User authenticated:', !!req.user)
+  
   const {
     items, // For guest checkout, items come from request
     shippingAddress,
@@ -54,11 +58,17 @@ export const createOrder = asyncHandler(async (req, res) => {
     }))
   } else {
     // Guest checkout - validate items from request
+    console.log('Processing guest checkout...')
+    console.log('Items:', items)
+    console.log('Customer info:', customerInfo)
+    
     if (!items || !Array.isArray(items) || items.length === 0) {
+      console.error('Invalid items for guest checkout:', items)
       throw new ApiError(400, 'Order items are required for guest checkout')
     }
     
     if (!customerInfo || !customerInfo.email || !customerInfo.name) {
+      console.error('Missing customer info for guest checkout:', customerInfo)
       throw new ApiError(400, 'Customer information is required for guest checkout')
     }
     
@@ -100,7 +110,12 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   // Validate required fields
+  console.log('Validating required fields...')
+  console.log('Shipping address:', shippingAddress)
+  console.log('Payment method:', paymentMethod)
+  
   if (!shippingAddress || !paymentMethod) {
+    console.error('Missing required fields - shippingAddress:', !!shippingAddress, 'paymentMethod:', !!paymentMethod)
     throw new ApiError(400, 'Shipping address and payment method are required')
   }
 
