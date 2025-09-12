@@ -91,7 +91,9 @@ app.use(cors({
           process.env.FRONTEND_URL || 'https://e-commerce-frontend-pink-xi.vercel.app',
           process.env.BACKEND_URL || 'https://e-commerce-backend-e8a0.onrender.com',
           'https://e-commerce-frontend-pink-xi.vercel.app', // Vercel frontend URL
-          'https://e-commerce-backend-e8a0.onrender.com' // Render backend URL
+          'https://e-commerce-backend-e8a0.onrender.com', // Render backend URL
+          'https://arizaan.com', // Custom domain
+          'https://www.arizaan.com' // Custom domain with www
         ] 
       : [
           'http://localhost:3000',
