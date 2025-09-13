@@ -48,10 +48,6 @@ const productSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  brand: {
-    type: String,
-    trim: true
-  },
   images: [{
     type: String,
     required: [true, 'Product image is required']

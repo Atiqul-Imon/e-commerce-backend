@@ -25,6 +25,7 @@ import leadRoutes from './routes/lead.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import recommendationRoutes from './routes/recommendation.routes.js';
 import healthRoutes from './routes/health.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware.js';
@@ -223,6 +224,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 app.use(notFound);

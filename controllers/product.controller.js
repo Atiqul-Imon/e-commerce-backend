@@ -15,7 +15,6 @@ const createProduct = asyncHandler(async (req, res) => {
     discountPercentage,
     category,
     subcategory,
-    brand,
     images,
     colors,
     sizes,
@@ -51,7 +50,6 @@ const createProduct = asyncHandler(async (req, res) => {
         name,
         category,
         subcategory,
-        brand,
         tags,
         price: price || originalPrice
       });
@@ -78,7 +76,6 @@ const createProduct = asyncHandler(async (req, res) => {
     discountPercentage: finalDiscountPercentage,
     category,
     subcategory,
-    brand,
     images,
     colors,
     sizes,
@@ -118,7 +115,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
     sortOrder = 'desc',
     category,
     subcategory,
-    brand,
     minPrice,
     maxPrice,
     search,
@@ -137,7 +133,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
     sortOrder,
     category || '',
     subcategory || '',
-    brand || '',
     minPrice || '',
     maxPrice || '',
     search || '',
@@ -169,7 +164,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
   if (category) filter.category = category;
   if (subcategory) filter.subcategory = subcategory;
-  if (brand) filter.brand = brand;
   if (featured === 'true') filter.featured = true;
   if (trending === 'true') filter.trending = true;
   if (bestSeller === 'true') filter.bestSeller = true;
@@ -467,17 +461,6 @@ const getCategories = asyncHandler(async (req, res) => {
   );
 });
 
-// Get brands
-const getBrands = asyncHandler(async (req, res) => {
-  const brands = await Product.distinct('brand', { 
-    isActive: true,
-    brand: { $exists: true, $ne: '' }
-  });
-  
-  return res.status(200).json(
-    new ApiResponse(200, brands, 'Brands retrieved successfully')
-  );
-});
 
 // Create fashion products for the store
 const createFashionProducts = asyncHandler(async (req, res) => {
@@ -490,7 +473,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 28,
       category: "Fashion",
       subcategory: "Dresses",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&h=600&fit=crop",
@@ -520,7 +502,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 30,
       category: "Fashion",
       subcategory: "Tops",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=600&fit=crop",
@@ -550,7 +531,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 20,
       category: "Fashion",
       subcategory: "Bottoms",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&h=600&fit=crop",
@@ -580,7 +560,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 25,
       category: "Beauty",
       subcategory: "Skincare",
-      brand: "NaturalGlow",
       images: [
         "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=500&h=600&fit=crop",
@@ -608,7 +587,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 29,
       category: "Sports",
       subcategory: "Fitness",
-      brand: "YogaLife",
       images: [
         "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=600&fit=crop",
@@ -636,7 +614,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 33,
       category: "Electronics",
       subcategory: "Smart Home",
-      brand: "SmartHome",
       images: [
         "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1543512214-318c7553f230?w=500&h=600&fit=crop",
@@ -664,7 +641,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 31,
       category: "Fashion",
       subcategory: "Accessories",
-      brand: "Elegance",
       images: [
         "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=500&h=600&fit=crop",
@@ -692,7 +668,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 33,
       category: "Electronics",
       subcategory: "Accessories",
-      brand: "ChargeTech",
       images: [
         "https://images.unsplash.com/photo-1609592806598-059d8d1d7a2e?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1609592806598-059d8d1d7a2e?w=500&h=600&fit=crop",
@@ -720,7 +695,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 20,
       category: "Fashion",
       subcategory: "Dresses",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&h=600&fit=crop",
@@ -750,7 +724,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 22,
       category: "Fashion",
       subcategory: "Outerwear",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=600&fit=crop",
@@ -780,7 +753,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 19,
       category: "Fashion",
       subcategory: "Shoes",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&h=600&fit=crop",
@@ -810,7 +782,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 33,
       category: "Fashion",
       subcategory: "Accessories",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=600&fit=crop",
@@ -840,7 +811,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 25,
       category: "Fashion",
       subcategory: "Dresses",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&h=600&fit=crop",
@@ -870,7 +840,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 23,
       category: "Fashion",
       subcategory: "Tops",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=600&fit=crop",
@@ -900,7 +869,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 21,
       category: "Fashion",
       subcategory: "Bottoms",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&h=600&fit=crop",
@@ -930,7 +898,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 25,
       category: "Fashion",
       subcategory: "Accessories",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1572635196237-14b3f2812f0d?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1572635196237-14b3f2812f0d?w=500&h=600&fit=crop",
@@ -960,7 +927,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 21,
       category: "Fashion",
       subcategory: "Dresses",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&h=600&fit=crop",
@@ -990,7 +956,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       discountPercentage: 30,
       category: "Fashion",
       subcategory: "Accessories",
-      brand: "Élégance",
       images: [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=600&fit=crop",
         "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=500&h=600&fit=crop",
@@ -1028,7 +993,6 @@ const createFashionProducts = asyncHandler(async (req, res) => {
       name: productData.name,
       category: productData.category,
       subcategory: productData.subcategory,
-      brand: productData.brand,
       tags: productData.tags,
       price: productData.price || productData.originalPrice
     });
@@ -1071,7 +1035,7 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
     isActive: true
   })
     .limit(4)
-    .select('name price images ratings discountPercentage category brand');
+    .select('name price images ratings discountPercentage category');
 
   return res.status(200).json(
     new ApiResponse(200, relatedProducts, 'Related products retrieved successfully')
@@ -1103,7 +1067,6 @@ const generateProductSKU = asyncHandler(async (req, res) => {
       name: product.name,
       category: product.category,
       subcategory: product.subcategory,
-      brand: product.brand,
       tags: product.tags,
       price: product.price || product.originalPrice
     });
@@ -1166,7 +1129,6 @@ const batchGenerateSKUs = asyncHandler(async (req, res) => {
         name: product.name,
         category: product.category,
         subcategory: product.subcategory,
-        brand: product.brand,
         tags: product.tags,
         price: product.price || product.originalPrice
       });
@@ -1245,7 +1207,7 @@ const getProductsWithoutSKU = asyncHandler(async (req, res) => {
   })
     .limit(limit * 1)
     .skip((page - 1) * limit)
-    .select('_id name category subcategory brand price originalPrice createdAt');
+    .select('_id name category subcategory price originalPrice createdAt');
 
   const total = await Product.countDocuments({
     $or: [
@@ -1279,7 +1241,6 @@ export {
   getTrendingProducts,
   getBestSellers,
   getCategories,
-  getBrands,
   getRelatedProducts,
   createFashionProducts,
   generateProductSKU,

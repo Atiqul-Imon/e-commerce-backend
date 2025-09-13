@@ -10,7 +10,6 @@ import {
   getTrendingProducts,
   getBestSellers,
   getCategories,
-  getBrands,
   getRelatedProducts,
   createFashionProducts,
   generateProductSKU,
@@ -34,7 +33,6 @@ router.get('/featured', getFeaturedProducts);
 router.get('/trending', getTrendingProducts);
 router.get('/best-sellers', getBestSellers);
 router.get('/categories', getCategories);
-router.get('/brands', getBrands);
 router.get('/:id', validateMongoId, getProductById);
 router.get('/:id/related', validateMongoId, getRelatedProducts);
 
