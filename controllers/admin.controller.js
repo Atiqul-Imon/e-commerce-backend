@@ -456,14 +456,12 @@ export const updateOrderStatus = asyncHandler(async (req, res, next) => {
   const { status, trackingNumber, trackingUrl, notes } = req.body
 
   const validStatuses = [
-    'Processing',
-    'Confirmed',
-    'Shipped',
-    'Out for Delivery',
-    'Delivered',
-    'Cancelled',
-    'Refunded',
-    'Returned'
+    'pending',
+    'confirmed',
+    'processing',
+    'shipped',
+    'delivered',
+    'cancelled'
   ]
 
   if (!validStatuses.includes(status)) {

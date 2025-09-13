@@ -61,7 +61,7 @@ const updateStockValidation = [
 
 const updateOrderStatusValidation = [
   body('status')
-    .isIn(['Processing', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Refunded', 'Returned'])
+    .isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'])
     .withMessage('Invalid order status'),
   body('trackingNumber')
     .optional()
