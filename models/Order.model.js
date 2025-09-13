@@ -23,7 +23,7 @@ const orderSchema = new mongoose.Schema({
     },
     email: {
       type: String,
-      required: function() { return !this.user },
+      required: false, // Made optional
       lowercase: true,
       match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
     },
@@ -74,16 +74,28 @@ const orderSchema = new mongoose.Schema({
   }],
   
   shippingAddress: {
-    type: {
-      type: String,
-      enum: ['home', 'work', 'other'],
-      default: 'home'
-    },
-    street: {
+    name: {
       type: String,
       required: true,
       trim: true,
-      maxLength: [200, 'Street address cannot exceed 200 characters']
+      maxLength: [100, 'Name cannot exceed 100 characters']
+    },
+    phone: {
+      type: String,
+      required: true,
+      match: [/^01[3-9]\d{8}$/, 'Please enter a valid Bangladeshi phone number']
+    },
+    address: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: [200, 'Address cannot exceed 200 characters']
+    },
+    area: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: [50, 'Area cannot exceed 50 characters']
     },
     city: {
       type: String,
@@ -91,42 +103,37 @@ const orderSchema = new mongoose.Schema({
       trim: true,
       maxLength: [50, 'City cannot exceed 50 characters']
     },
-    state: {
-      type: String,
-      required: true,
-      trim: true,
-      maxLength: [50, 'State/Division cannot exceed 50 characters']
-    },
-    postalCode: {
-      type: String,
-      required: true,
-      trim: true,
-      maxLength: [10, 'Postal code cannot exceed 10 characters']
-    },
     country: {
       type: String,
       required: true,
       default: 'Bangladesh',
       trim: true
-    },
-    phone: {
-      type: String,
-      required: true,
-      match: [/^01[3-9]\d{8}$/, 'Please enter a valid Bangladeshi phone number']
     }
   },
   
   billingAddress: {
-    type: {
-      type: String,
-      enum: ['home', 'work', 'other'],
-      default: 'home'
-    },
-    street: {
+    name: {
       type: String,
       required: true,
       trim: true,
-      maxLength: [200, 'Street address cannot exceed 200 characters']
+      maxLength: [100, 'Name cannot exceed 100 characters']
+    },
+    phone: {
+      type: String,
+      required: true,
+      match: [/^01[3-9]\d{8}$/, 'Please enter a valid Bangladeshi phone number']
+    },
+    address: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: [200, 'Address cannot exceed 200 characters']
+    },
+    area: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: [50, 'Area cannot exceed 50 characters']
     },
     city: {
       type: String,
@@ -134,28 +141,11 @@ const orderSchema = new mongoose.Schema({
       trim: true,
       maxLength: [50, 'City cannot exceed 50 characters']
     },
-    state: {
-      type: String,
-      required: true,
-      trim: true,
-      maxLength: [50, 'State/Division cannot exceed 50 characters']
-    },
-    postalCode: {
-      type: String,
-      required: true,
-      trim: true,
-      maxLength: [10, 'Postal code cannot exceed 10 characters']
-    },
     country: {
       type: String,
       required: true,
       default: 'Bangladesh',
       trim: true
-    },
-    phone: {
-      type: String,
-      required: true,
-      match: [/^01[3-9]\d{8}$/, 'Please enter a valid Bangladeshi phone number']
     }
   },
   
@@ -163,7 +153,7 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: {
     type: {
       type: String,
-      enum: ['cash_on_delivery', 'bkash', 'nagad', 'rocket', 'bank_transfer', 'card'],
+      enum: ['cash_on_delivery', 'cod', 'bkash', 'nagad', 'rocket', 'bank_transfer', 'card'],
       required: true
     },
     // Mobile banking details (bKash, Nagad, Rocket)

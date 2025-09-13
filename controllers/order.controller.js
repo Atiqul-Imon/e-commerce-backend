@@ -67,9 +67,9 @@ export const createOrder = asyncHandler(async (req, res) => {
       throw new ApiError(400, 'Order items are required for guest checkout')
     }
     
-    if (!customerInfo || !customerInfo.email || !customerInfo.name) {
+    if (!customerInfo || !customerInfo.name || !customerInfo.phone) {
       console.error('Missing customer info for guest checkout:', customerInfo)
-      throw new ApiError(400, 'Customer information is required for guest checkout')
+      throw new ApiError(400, 'Customer name and phone are required for guest checkout')
     }
     
     // Validate each item
@@ -141,6 +141,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Validate payment method for Bangladeshi market
   const validPaymentMethods = [
     'cash_on_delivery',
+    'cod',
     'bkash',
     'nagad',
     'rocket',
@@ -159,10 +160,21 @@ export const createOrder = asyncHandler(async (req, res) => {
     customerInfo: !user ? customerInfo : undefined,
     items: orderItems,
     shippingAddress: {
-      ...shippingAddress,
+      name: shippingAddress.name,
+      phone: shippingAddress.phone,
+      address: shippingAddress.address,
+      area: shippingAddress.area,
+      city: shippingAddress.city,
       country: shippingAddress.country || 'Bangladesh'
     },
-    billingAddress: billingAddress || shippingAddress,
+    billingAddress: billingAddress || {
+      name: shippingAddress.name,
+      phone: shippingAddress.phone,
+      address: shippingAddress.address,
+      area: shippingAddress.area,
+      city: shippingAddress.city,
+      country: shippingAddress.country || 'Bangladesh'
+    },
     paymentMethod: {
       type: paymentMethod.type,
       ...paymentMethod
@@ -173,7 +185,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     discount,
     totalAmount,
     orderStatus: 'pending',
-    paymentStatus: paymentMethod.type === 'cash_on_delivery' ? 'pending' : 'awaiting_payment',
+    paymentStatus: (paymentMethod.type === 'cash_on_delivery' || paymentMethod.type === 'cod') ? 'pending' : 'awaiting_payment',
     notes,
     promoCode,
     // Bangladeshi specific fields

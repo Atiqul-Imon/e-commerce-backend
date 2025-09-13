@@ -141,37 +141,35 @@ export const validateCreateOrder = [
   body('shippingAddress')
     .isObject()
     .withMessage('Shipping address is required'),
-  body('shippingAddress.street')
+  body('shippingAddress.name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
+  body('shippingAddress.phone')
+    .matches(/^01[3-9]\d{8}$/)
+    .withMessage('Phone number must be a valid Bangladeshi number (01XXXXXXXXX)'),
+  body('shippingAddress.address')
     .trim()
     .isLength({ min: 5, max: 200 })
-    .withMessage('Street address must be between 5 and 200 characters'),
+    .withMessage('Address must be between 5 and 200 characters'),
+  body('shippingAddress.area')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Area must be between 2 and 50 characters'),
   body('shippingAddress.city')
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('City must be between 2 and 50 characters'),
-  body('shippingAddress.state')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('State must be between 2 and 50 characters'),
-  body('shippingAddress.postalCode')
-    .optional()
-    .trim()
-    .isLength({ min: 4, max: 10 })
-    .withMessage('Postal code must be between 4 and 10 characters'),
   body('shippingAddress.country')
     .optional()
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Country must be between 2 and 50 characters'),
-  body('shippingAddress.phone')
-    .matches(/^01[3-9]\d{8}$/)
-    .withMessage('Phone number must be a valid Bangladeshi number (01XXXXXXXXX)'),
   body('paymentMethod')
     .isObject()
     .withMessage('Payment method is required'),
   body('paymentMethod.type')
-    .isIn(['cash_on_delivery', 'bkash', 'nagad', 'rocket', 'bank_transfer', 'card'])
+    .isIn(['cash_on_delivery', 'cod', 'bkash', 'nagad', 'rocket', 'bank_transfer', 'card'])
     .withMessage('Invalid payment method type'),
   body('items')
     .optional()
