@@ -27,6 +27,14 @@ import recommendationRoutes from './routes/recommendation.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import facebookRoutes from './routes/facebook.routes.js';
+import { 
+  trackPageView as devTrackPageView,
+  trackViewContent as devTrackViewContent,
+  trackAddToCart as devTrackAddToCart,
+  trackInitiateCheckout as devTrackInitiateCheckout,
+  trackPurchase as devTrackPurchase,
+  trackLead as devTrackLead
+} from './controllers/facebookDev.controller.js';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware.js';
@@ -234,7 +242,21 @@ app.use('/api/search', searchRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/facebook', facebookRoutes);
+// Facebook CAPI routes - use dummy controllers in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔧 Development Mode: Using dummy Facebook CAPI controllers');
+  
+  // Dummy Facebook CAPI routes for development
+  app.post('/api/facebook/pageview', devTrackPageView);
+  app.post('/api/facebook/viewcontent', devTrackViewContent);
+  app.post('/api/facebook/addtocart', devTrackAddToCart);
+  app.post('/api/facebook/initiatecheckout', devTrackInitiateCheckout);
+  app.post('/api/facebook/purchase', devTrackPurchase);
+  app.post('/api/facebook/lead', devTrackLead);
+} else {
+  // Production Facebook CAPI routes
+  app.use('/api/facebook', facebookRoutes);
+}
 
 // Error handling middleware
 app.use(notFound);
