@@ -26,6 +26,7 @@ import searchRoutes from './routes/search.routes.js';
 import recommendationRoutes from './routes/recommendation.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import facebookRoutes from './routes/facebook.routes.js';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware.js';
@@ -162,6 +163,14 @@ app.use((req, res, next) => {
   } else if (req.path.startsWith('/api/health') && req.method === 'GET') {
     // Cache health check for 30 seconds
     res.set('Cache-Control', 'public, max-age=30, s-maxage=30');
+  } else if (req.path.startsWith('/api/cart') || 
+             req.path.startsWith('/api/orders') || 
+             req.path.startsWith('/api/auth') ||
+             req.path.startsWith('/api/admin')) {
+    // No caching for dynamic user data - always fresh
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
   } else if (req.method === 'GET') {
     // Default cache for other GET requests
     res.set('Cache-Control', 'public, max-age=60, s-maxage=60');
@@ -225,6 +234,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/facebook', facebookRoutes);
 
 // Error handling middleware
 app.use(notFound);

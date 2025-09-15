@@ -280,6 +280,19 @@ const updateProduct = asyncHandler(async (req, res) => {
     { new: true, runValidators: true }
   );
 
+  // Invalidate product caches when product is updated
+  await cache.delPattern('products:*');
+  await cache.delPattern('featured-products');
+  await cache.delPattern('trending-products');
+  await cache.delPattern('best-sellers');
+  await cache.del(`product:${id}`);
+  
+  // If stock changed, also invalidate cart caches
+  if (req.body.stock !== undefined && req.body.stock !== product.stock) {
+    console.log('Stock changed, invalidating cart caches');
+    await cache.delPattern('cart:*');
+  }
+
   return res.status(200).json(
     new ApiResponse(200, updatedProduct, 'Product updated successfully')
   );
