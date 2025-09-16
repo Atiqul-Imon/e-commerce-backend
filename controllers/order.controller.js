@@ -121,8 +121,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   // Calculate totals
   const subtotal = orderItems.reduce((total, item) => total + (item.price * item.quantity), 0)
-  const freeShippingThreshold = 1000
-  const shippingCost = subtotal >= freeShippingThreshold ? 0 : 60
+  const shippingCost = 100 // Fixed shipping cost of 100 BDT per order
   const tax = 0 // No tax for now
   let discount = 0
 
