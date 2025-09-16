@@ -242,6 +242,9 @@ app.use('/api/search', searchRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/upload', uploadRoutes);
+// Facebook routes (both development and production)
+app.use('/api/facebook', facebookRoutes);
+
 // Facebook CAPI routes - use dummy controllers in development
 if (process.env.NODE_ENV === 'development') {
   console.log('🔧 Development Mode: Using dummy Facebook CAPI controllers');
@@ -253,9 +256,6 @@ if (process.env.NODE_ENV === 'development') {
   app.post('/api/facebook/initiatecheckout', devTrackInitiateCheckout);
   app.post('/api/facebook/purchase', devTrackPurchase);
   app.post('/api/facebook/lead', devTrackLead);
-} else {
-  // Production Facebook CAPI routes
-  app.use('/api/facebook', facebookRoutes);
 }
 
 // Error handling middleware
