@@ -240,6 +240,14 @@ export const getInventory = asyncHandler(async (req, res, next) => {
     { $match: query },
     { $group: { _id: null, total: { $sum: { $multiply: ['$price', '$stock'] } } } }
   ])
+  
+  console.log('Inventory stats calculation:', {
+    query,
+    totalProducts,
+    outOfStock,
+    lowStock,
+    totalValue: totalValue[0]?.total || 0
+  })
 
   res.status(200).json({
     success: true,
