@@ -190,7 +190,83 @@ export const deleteUser = asyncHandler(async (req, res, next) => {
 export const getInventory = asyncHandler(async (req, res, next) => {
   const { page = 1, limit = 10, search, category, stockStatus } = req.query
 
-  // Build query
+  // Build query - include only active products for admin inventory
+  const query = { isActive: true }
+  
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { sku: { $regex: search, $options: 'i' } },
+      { brand: { $regex: search, $options: 'i' } }
+    ]
+  }
+  
+  if (category) {
+    query.category = category
+  }
+  
+  if (stockStatus) {
+    switch (stockStatus) {
+      case 'in-stock':
+        query.stock = { $gt: 0 }
+        break
+      case 'out-of-stock':
+        query.stock = 0
+        break
+      case 'low-stock':
+        query.stock = { $gt: 0, $lte: 10 }
+        break
+    }
+  }
+
+  // Calculate pagination
+  const skip = (page - 1) * limit
+  
+  // Get products with pagination
+  const products = await Product.find(query)
+    .select('name sku category brand stock price images isActive ratings numReviews createdAt updatedAt description')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit))
+
+  // Get total count
+  const total = await Product.countDocuments(query)
+
+  // Get inventory stats
+  const totalProducts = await Product.countDocuments()
+  const outOfStock = await Product.countDocuments({ stock: 0 })
+  const lowStock = await Product.countDocuments({ stock: { $gt: 0, $lte: 10 } })
+  const totalValue = await Product.aggregate([
+    { $group: { _id: null, total: { $sum: { $multiply: ['$price', '$stock'] } } } }
+  ])
+
+  res.status(200).json({
+    success: true,
+    data: {
+      products,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      },
+      stats: {
+        totalProducts,
+        outOfStock,
+        lowStock,
+        totalValue: totalValue[0]?.total || 0
+      }
+    }
+  })
+})
+
+// @desc    Get all products for admin (including inactive)
+// @route   GET /api/admin/products
+// @access  Private (Admin only)
+export const getAllProducts = asyncHandler(async (req, res, next) => {
+  const { page = 1, limit = 10, search, category, stockStatus } = req.query
+
+  // Build query - include ALL products (active and inactive)
   const query = {}
   
   if (search) {
@@ -224,7 +300,7 @@ export const getInventory = asyncHandler(async (req, res, next) => {
   
   // Get products with pagination
   const products = await Product.find(query)
-    .select('name sku category brand stock price images isActive')
+    .select('name sku category brand stock price images isActive ratings numReviews createdAt updatedAt description')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit))
@@ -232,13 +308,11 @@ export const getInventory = asyncHandler(async (req, res, next) => {
   // Get total count
   const total = await Product.countDocuments(query)
 
-  // Get inventory stats
+  // Get stats
   const totalProducts = await Product.countDocuments()
+  const activeProducts = await Product.countDocuments({ isActive: true })
   const outOfStock = await Product.countDocuments({ stock: 0 })
   const lowStock = await Product.countDocuments({ stock: { $gt: 0, $lte: 10 } })
-  const totalValue = await Product.aggregate([
-    { $group: { _id: null, total: { $sum: { $multiply: ['$price', '$stock'] } } } }
-  ])
 
   res.status(200).json({
     success: true,
@@ -252,11 +326,57 @@ export const getInventory = asyncHandler(async (req, res, next) => {
       },
       stats: {
         totalProducts,
+        activeProducts,
         outOfStock,
-        lowStock,
-        totalValue: totalValue[0]?.total || 0
+        lowStock
       }
     }
+  })
+})
+
+// @desc    Update product
+// @route   PUT /api/admin/products/:id
+// @access  Private (Admin only)
+export const updateProduct = asyncHandler(async (req, res, next) => {
+  const { id } = req.params
+  const updateData = req.body
+
+  const product = await Product.findByIdAndUpdate(
+    id,
+    updateData,
+    { new: true, runValidators: true }
+  )
+
+  if (!product) {
+    throw new ApiError(404, 'Product not found')
+  }
+
+  res.status(200).json({
+    success: true,
+    data: product,
+    message: 'Product updated successfully'
+  })
+})
+
+// @desc    Delete product (soft delete)
+// @route   DELETE /api/admin/products/:id
+// @access  Private (Admin only)
+export const deleteProduct = asyncHandler(async (req, res, next) => {
+  const { id } = req.params
+
+  const product = await Product.findById(id)
+
+  if (!product) {
+    throw new ApiError(404, 'Product not found')
+  }
+
+  // Soft delete - mark as inactive
+  product.isActive = false
+  await product.save()
+
+  res.status(200).json({
+    success: true,
+    message: 'Product deleted successfully'
   })
 })
 

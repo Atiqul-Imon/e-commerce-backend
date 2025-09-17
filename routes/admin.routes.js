@@ -10,6 +10,9 @@ import {
   getAllUsers,
   updateUserRole,
   deleteUser,
+  getAllProducts,
+  updateProduct,
+  deleteProduct,
   getInventory,
   updateProductStock,
   bulkUpdateInventory,
@@ -104,6 +107,11 @@ router.get('/analytics', getAnalytics);
 router.get('/users', getAllUsers);
 router.put('/users/:id/role', authorize('admin'), updateUserRole);
 router.delete('/users/:id', authorize('admin'), deleteUser);
+
+// Product management routes
+router.get('/products', getAllProducts);
+router.put('/products/:id', updateProduct);
+router.delete('/products/:id', deleteProduct);
 
 // Inventory management routes
 router.get('/inventory', getInventory);
