@@ -26,7 +26,6 @@ import searchRoutes from './routes/search.routes.js';
 import recommendationRoutes from './routes/recommendation.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
-import facebookRoutes from './routes/facebook.routes.js';
 import { 
   trackPageView as devTrackPageView,
   trackViewContent as devTrackViewContent,
@@ -242,8 +241,6 @@ app.use('/api/search', searchRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/upload', uploadRoutes);
-// Facebook routes (both development and production)
-app.use('/api/facebook', facebookRoutes);
 
 // Facebook CAPI routes - use dummy controllers in development
 if (process.env.NODE_ENV === 'development') {
