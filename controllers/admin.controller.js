@@ -232,11 +232,12 @@ export const getInventory = asyncHandler(async (req, res, next) => {
   // Get total count
   const total = await Product.countDocuments(query)
 
-  // Get inventory stats
-  const totalProducts = await Product.countDocuments()
-  const outOfStock = await Product.countDocuments({ stock: 0 })
-  const lowStock = await Product.countDocuments({ stock: { $gt: 0, $lte: 10 } })
+  // Get inventory stats (only for active products)
+  const totalProducts = await Product.countDocuments(query)
+  const outOfStock = await Product.countDocuments({ ...query, stock: 0 })
+  const lowStock = await Product.countDocuments({ ...query, stock: { $gt: 0, $lte: 10 } })
   const totalValue = await Product.aggregate([
+    { $match: query },
     { $group: { _id: null, total: { $sum: { $multiply: ['$price', '$stock'] } } } }
   ])
 
